@@ -75,7 +75,6 @@ poetry-plugin-export
 pooch
 psycopg2
 ptyprocess
-portaudio10-dev
 pycparser
 pycryptodomex
 Pygments
