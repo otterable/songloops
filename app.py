@@ -15,7 +15,7 @@ def index():
     <title>Ermine song loops</title>
     <style>
         body {
-            font-family: "Arial", sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #000;
             color: #fff;
             font-size: 28px;
@@ -140,11 +140,14 @@ def upload():
 
     looped_files = []
 
+    os.makedirs('temp', exist_ok=True)  # Create the 'temp/' directory if it doesn't exist
+
     for file in files:
         # Save each uploaded file to a temporary location
         filename = file.filename
         file_path = os.path.join('temp', filename)
         file.save(file_path)
+
 
         # Run the music looping script using subprocess
         script_path = 'pymusiclooper'  # Assuming the script is in the current directory or on the PATH
@@ -185,7 +188,7 @@ def process():
                 <title>Invalid URL</title>
                 <style>
                     body {
-                        font-family: "Arial", sans-serif;
+                        font-family: Arial, sans-serif;
                         background-color: #000;
                         color: #fff;
                         font-size: 28px;
@@ -226,7 +229,7 @@ def process():
                     <title>Error Processing URL</title>
                     <style>
                         body {
-                            font-family: "Arial", sans-serif;
+                            font-family: Arial, sans-serif;
                             background-color: #000;
                             color: #fff;
                             font-size: 28px;
@@ -260,7 +263,7 @@ def process():
                 <title>Error Processing URL</title>
                 <style>
                     body {
-                        font-family: "Arial", sans-serif;
+                        font-family: Arial, sans-serif;
                         background-color: #000;
                         color: #fff;
                         font-size: 28px;
@@ -296,7 +299,7 @@ def process():
                 <title>No Files Generated</title>
                 <style>
                     body {
-                        font-family: "Arial", sans-serif;
+                        font-family: Arial, sans-serif;
                         background-color: #000;
                         color: #fff;
                         font-size: 28px;
@@ -336,7 +339,7 @@ def process():
                 <title>Error Moving File</title>
                 <style>
                     body {
-                        font-family: "Arial", sans-serif;
+                        font-family: Arial, sans-serif;
                         background-color: #000;
                         color: #fff;
                         font-size: 28px;
