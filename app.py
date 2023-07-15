@@ -117,7 +117,7 @@ def index():
             </div>
         </form>
         <div class="about-section">
-            A simple site for generating perfect song loops. Supports batch file upload. An <a href="https://ermine.de">Ermine</a> project.
+            A simple site for generating perfect song loops. Supports batch file upload. Max. filesize is 100 MB. An Ermine project.
         </div>
     </div>
 </body>
@@ -139,40 +139,50 @@ def upload():
     files = request.files.getlist('music')
 
     looped_files = []
+    output_folder = os.path.join(app.root_path, 'temp', 'LooperOutput')
 
-    os.makedirs('temp', exist_ok=True)  # Create the 'temp/' directory if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)  # Create the 'LooperOutput' directory if it doesn't exist
 
     for file in files:
         # Save each uploaded file to a temporary location
         filename = file.filename
-        file_path = os.path.join('temp', filename)
+        file_path = os.path.join(app.root_path, 'temp', filename)
         file.save(file_path)
-
 
         # Run the music looping script using subprocess
         script_path = 'pymusiclooper'  # Assuming the script is in the current directory or on the PATH
-        output_folder = os.path.join('temp', 'LooperOutput')
         output_filename = f'{os.path.splitext(filename)[0]}-loop{os.path.splitext(filename)[1]}'
         output_filepath = os.path.join(output_folder, output_filename)
 
         command = [script_path, 'split-audio', '--path', file_path]
 
-        subprocess.run(command)
+        subprocess.run(command, cwd=app.root_path)
 
         # Wait for the output file to be generated
         time.sleep(2)
 
         # Move the generated file to the 'LooperOutput' folder
         generated_filename = filename + '-loop.wav'
-        generated_filepath = os.path.join('temp', 'LooperOutput', generated_filename)
+        generated_filepath = os.path.join(output_folder, generated_filename)
 
-        os.makedirs(output_folder, exist_ok=True)
-        shutil.move(generated_filepath, output_filepath)
-
-        looped_files.append(output_filename)
+        if os.path.exists(generated_filepath):
+            shutil.move(generated_filepath, output_filepath)
+            looped_files.append(output_filename)
 
     # Provide the download links to the user
-    return redirect(url_for('download', filenames=','.join(looped_files)))
+    if len(looped_files) == 1:
+        return send_from_directory(output_folder, looped_files[0], as_attachment=True)
+    else:
+        # Create a zip file containing the looped files
+        zip_filename = 'looped_files.zip'
+        zip_filepath = os.path.join(app.root_path, 'temp', zip_filename)
+
+        with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
+            for looped_file in looped_files:
+                looped_filepath = os.path.join(output_folder, looped_file)
+                zip_file.write(looped_filepath, looped_file)
+
+        return send_from_directory(os.path.join(app.root_path, 'temp'), zip_filename, as_attachment=True)
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -212,47 +222,35 @@ def process():
 
         # Run the music looping script using subprocess with the URL
         script_path = 'pymusiclooper'  # Assuming the script is in the current directory or on the PATH
-        output_folder = os.path.join('temp', 'LooperOutput')
+        output_folder = os.path.join(app.root_path, 'LooperOutput')
 
         command = [script_path, 'split-audio', '--url', url]
 
         try:
-            # Capture the output and error streams
-            result = subprocess.run(command, capture_output=True, text=True)
+            subprocess.run(command, cwd=app.root_path, check=True)
 
-            if result.returncode != 0:
-                # An error occurred during the execution of the music looping script
-                return '''
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Error Processing URL</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            background-color: #000;
-                            color: #fff;
-                            font-size: 28px;
-                            line-height: 1.5;
-                            font-weight: bold;
-                            text-align: center;
-                        }
-                        .message {
-                            margin-top: 100px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="message">
-                        <h1>Error Processing URL</h1>
-                        <p>An error occurred while processing the URL.</p>
-                        <p>Error Output:</p>
-                        <pre>{}</pre>
-                        <p>Error: {}</p>
-                    </div>
-                </body>
-                </html>
-                '''.format(result.stdout, result.stderr)
+        except subprocess.CalledProcessError as e:
+            # An error occurred during the execution of the music looping script
+            return '''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Error Processing URL</title>
+                <style>
+                    ...
+                </style>
+            </head>
+            <body>
+                <div class="message">
+                    <h1>Error Processing URL</h1>
+                    <p>An error occurred while processing the URL.</p>
+                    <p>Error Output:</p>
+                    <pre>{}</pre>
+                    <p>Error: {}</p>
+                </div>
+            </body>
+            </html>
+            '''.format(e.output, e)
 
         except Exception as e:
             # An exception occurred while running the subprocess command
@@ -321,16 +319,50 @@ def process():
             </html>
             '''
 
-        # Generate the output filenames using the scheme "outputloop-suffix.wav"
-        loop_filename = 'outputloop.wav'
-        loop_filepath = os.path.join(output_folder, loop_filename)
+        # Find the looped file
+        loop_filename = None
+        for filename in files_in_output_folder:
+            if filename.endswith('.opus-loop.wav'):
+                loop_filename = filename
+                break
 
-        # Move the generated loop file to the output folder, overwriting if it already exists
-        looped_filename = files_in_output_folder[0]
-        looped_filepath = os.path.join(output_folder, looped_filename)
+        if loop_filename is None:
+            return '''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>No Loop File Found</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #000;
+                        color: #fff;
+                        font-size: 28px;
+                        line-height: 1.5;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                    .message {
+                        margin-top: 100px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="message">
+                    <h1>No Loop File Found</h1>
+                    <p>No looped file was generated for the given URL.</p>
+                </div>
+            </body>
+            </html>
+            '''
+
+        # Move the generated loop file to the output folder
+        looped_filepath = os.path.join(output_folder, loop_filename)
+        loop_filepath = os.path.join(app.root_path, 'temp', 'LooperOutput', loop_filename)
 
         try:
-            shutil.move(looped_filepath, loop_filepath, copy_function=shutil.copy2)
+            os.makedirs(os.path.dirname(loop_filepath), exist_ok=True)
+            shutil.move(looped_filepath, loop_filepath)
         except Exception as e:
             return '''
             <!DOCTYPE html>
@@ -361,10 +393,11 @@ def process():
             </html>
             '''.format(error=str(e))
 
-        # Provide the download link to the user for the looped file only
-        return redirect(url_for('download', filenames=loop_filename))
+        # Provide the download link to the user for the looped file
+        return send_from_directory(os.path.join(app.root_path, 'temp', 'LooperOutput'), loop_filename, as_attachment=True)
 
     return redirect(url_for('error'))
+
 
 import zipfile
 
@@ -397,11 +430,6 @@ def error():
 def get_logo():
     # Serve the logo file
     return send_from_directory('static', 'logo.png')
-
-@app.route('/ermine')
-def ermine_redirect():
-    # Redirect to the Ermine website
-    return redirect('https://ermine.de')
 
 if __name__ == '__main__':
     app.run()
