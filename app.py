@@ -113,7 +113,7 @@ def index():
         <h1>Ermine Song Loops</h1>
         <form action="/upload" method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <label for="music">Choose .mp3, .wav files:</label>
+                <label for="music">Choose .mp3, .wav files..</label>
                 <input type="file" name="music" id="music" accept=".mp3, .wav" multiple>
             </div>
             <div class="form-group">
@@ -126,7 +126,7 @@ def index():
         </form>
         <form action="/process" method="post">
             <div class="form-group">
-                <label for="url">Or enter a YouTube URL:</label>
+                <label for="url">..or enter a YouTube URL:</label>
                 <input type="text" name="url" id="url">
             </div>
             <div class="form-group">
@@ -139,7 +139,7 @@ def index():
         </form>
         <div class="about-section">
             A simple site for generating perfect song loops. Max. size: 100 MB. An Ermine project.
-            <div class="usage-text">Creates prefectly loopable song cuts for easy repetition.</div>
+            <div class="usage-text">Creates perfectly loopable song cuts for easy repetition.</div>
         </div>
     </div>
 </body>
