@@ -5,6 +5,7 @@ import time
 import zipfile
 from flask import Flask, request, redirect, url_for, send_from_directory
 from pydub import AudioSegment
+import re
 
 app = Flask(__name__)
 
@@ -124,21 +125,8 @@ def index():
                 <input type="submit" value="Upload">
             </div>
         </form>
-        <form action="/process" method="post">
-            <div class="form-group">
-                <label for="url">..or enter a YouTube URL:</label>
-                <input type="text" name="url" id="url">
-            </div>
-            <div class="form-group">
-                <label for="triplicate">Loop 3 times</label>
-                <input type="checkbox" name="triplicate" id="triplicate" style="transform: scale(1.5);">
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Process">
-            </div>
-        </form>
         <div class="about-section">
-            A simple site for generating perfect song loops. Max. size: 100 MB. An Ermine project.
+            A simple site for generating perfect song loops. Max. size: 100 MB. An <a href="https://ermine.de" target="_blank">Ermine</a> project.
             <div class="usage-text">Creates perfectly loopable song cuts for easy repetition.</div>
         </div>
     </div>
@@ -202,18 +190,7 @@ def process():
             <head>
                 <title>Invalid URL</title>
                 <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #000;
-                        color: #fff;
-                        font-size: 28px;
-                        line-height: 1.5;
-                        font-weight: bold;
-                        text-align: center;
-                    }
-                    .message {
-                        margin-top: 100px;
-                    }
+                    ...
                 </style>
             </head>
             <body>
@@ -226,13 +203,100 @@ def process():
             '''
 
         triplicate = 'triplicate' in request.form
-        output_folder = os.path.join(app.root_path, 'temp', 'LooperOutput')
 
-        os.makedirs(output_folder, exist_ok=True)  # Create the 'LooperOutput' directory if it doesn't exist
+        # Corrected the output_folder for YouTube-generated files
+        user_uploaded_output_folder = os.path.join(app.root_path, 'temp', 'LooperOutput')
+        youtube_output_folder = os.path.join(app.root_path, 'LooperOutput')
 
-        looped_filename = process_url(url, output_folder, triplicate)
-        if looped_filename:
-            return send_from_directory(output_folder, looped_filename, as_attachment=True)
+        os.makedirs(youtube_output_folder, exist_ok=True)  # Create the 'LooperOutput' directory if it doesn't exist
+
+        # Process the URL and get the looped filename
+        looped_filename = process_url(url, youtube_output_folder, triplicate)
+
+        # Check if the response is a string (HTML error message) instead of a filename
+        if not isinstance(looped_filename, str):
+            return looped_filename  # Return the error message directly instead of trying to send it as a file
+
+        # Continue with the normal flow for sending the looped file
+        return send_loop_file(youtube_output_folder, looped_filename, triplicate)
+
+    return redirect(url_for('error'))
+
+def send_loop_file(output_folder, looped_filename, triplicate):
+    looped_filepath = os.path.join(output_folder, looped_filename)
+    if not os.path.exists(looped_filepath):
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>No Loop File Found</title>
+            <style>
+                ...
+            </style>
+        </head>
+        <body>
+            <div class="message">
+                <h1>No Loop File Found</h1>
+                <p>No looped file was generated for the given URL.</p>
+            </div>
+        </body>
+        </html>
+        '''
+
+    if triplicate:
+        triplicated_filename = triplicate_audio(looped_filepath)
+        if triplicated_filename:
+            # Remove square brackets from the triplicated filename
+            triplicated_filename_cleaned = re.sub(r'\[|\]', '', triplicated_filename)
+            looped_filename = triplicated_filename_cleaned
+
+    # If triplicate is not enabled, directly send the looped file for download
+    return download_loop_file(looped_filepath, looped_filename)
+
+def download_loop_file(filepath, filename):
+    # Function to send the looped file for download
+    def generate():
+        with open(filepath, 'rb') as file:
+            yield from file
+
+    # Create a custom response to send the looped file as an attachment
+    response = Response(generate(), content_type='application/octet-stream')
+    response.headers.set('Content-Disposition', 'attachment', filename=filename)
+    return response
+
+    return redirect(url_for('error'))
+
+def send_loop_file(output_folder, looped_filename, triplicate):
+    # Check if the looped file exists
+    looped_filepath = os.path.join(output_folder, looped_filename)
+    if not os.path.exists(looped_filepath):
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>No Loop File Found</title>
+            <style>
+                ...
+            </style>
+        </head>
+        <body>
+            <div class="message">
+                <h1>No Loop File Found</h1>
+                <p>No looped file was generated for the given URL.</p>
+            </div>
+        </body>
+        </html>
+        '''
+
+    if triplicate:
+        triplicated_filename = triplicate_audio(looped_filepath)
+        if triplicated_filename:
+            # Remove square brackets from the triplicated filename
+            triplicated_filename_cleaned = re.sub(r'\[|\]', '', triplicated_filename)
+            looped_filename = triplicated_filename_cleaned
+
+    # If triplicate is not enabled, directly send the looped file for download
+    return send_from_directory(output_folder, looped_filename, as_attachment=True)
 
     return redirect(url_for('error'))
 
@@ -264,6 +328,7 @@ def process_file(file_path, output_folder, triplicate):
         return output_filename
 
     return None
+    
 
 def process_url(url, output_folder, triplicate):
     # Run the music looping script using subprocess with the URL
@@ -319,7 +384,7 @@ def process_url(url, output_folder, triplicate):
         '''.format(str(e))
 
     # Wait for the output files to be generated
-    time.sleep(2)
+    time.sleep(5)  # Increase the waiting time to ensure the file is fully downloaded and ready
 
     # Check if any files were generated in the output folder
     files_in_output_folder = os.listdir(output_folder)
@@ -342,7 +407,10 @@ def process_url(url, output_folder, triplicate):
         </html>
         '''
 
-    # Find the looped file
+    # Sort files by modification date (newest to oldest)
+    files_in_output_folder.sort(key=lambda x: os.path.getmtime(os.path.join(output_folder, x)), reverse=True)
+
+    # Find the looped file with the latest modification date
     loop_filename = None
     for filename in files_in_output_folder:
         if filename.endswith('.opus-loop.wav'):
@@ -350,6 +418,7 @@ def process_url(url, output_folder, triplicate):
             break
 
     if loop_filename is None:
+        print("Error: No Loop File Found for the given URL. Directory:", output_folder)
         return '''
         <!DOCTYPE html>
         <html>
@@ -368,9 +437,12 @@ def process_url(url, output_folder, triplicate):
         </html>
         '''
 
+    # Remove square brackets from the filename
+    loop_filename_cleaned = re.sub(r'\[|\]', '', loop_filename)
+
     # Move the generated loop file to the output folder
     looped_filepath = os.path.join(output_folder, loop_filename)
-    loop_filepath = os.path.join(app.root_path, 'temp', 'LooperOutput', loop_filename)
+    loop_filepath = os.path.join(output_folder, loop_filename_cleaned)
 
     try:
         os.makedirs(os.path.dirname(loop_filepath), exist_ok=True)
@@ -395,12 +467,34 @@ def process_url(url, output_folder, triplicate):
         '''.format(error=str(e))
 
     if triplicate:
-        triplicated_filename = triplicate_audio(loop_filepath)
-        if triplicated_filename:
-            return triplicated_filename
+        # Triplicate the audio file and save the triplicated file
+        triplicated_filepath = triplicate_audio(loop_filepath)
+        if triplicated_filepath:
+            # Remove square brackets from the triplicated filename
+            triplicated_filename_cleaned = re.sub(r'\[|\]', '', os.path.basename(triplicated_filepath))
+            triplicated_output_filepath = os.path.join(output_folder, triplicated_filename_cleaned)
+            try:
+                shutil.move(triplicated_filepath, triplicated_output_filepath)
+            except Exception as e:
+                return '''
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error Moving Triplicated File</title>
+                    <style>
+                        ...
+                    </style>
+                </head>
+                <body>
+                    <div class="message">
+                        <h1>Error Moving Triplicated File</h1>
+                        <p>An error occurred while moving the triplicated file. Error: {error}</p>
+                    </div>
+                </body>
+                </html>
+                '''.format(error=str(e))
+            return triplicated_filename_cleaned  # Return the triplicated file name
 
-    # Provide the download link to the user for the looped file
-    return loop_filename
 
 def triplicate_audio(audio_path):
     # Load the audio file
@@ -417,6 +511,7 @@ def triplicate_audio(audio_path):
 
     return triplicated_filename
 
+
 @app.route('/download')
 def download():
     filenames = request.args.get('filenames')
@@ -430,7 +525,7 @@ def download():
 
         with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
             for filename in filenames:
-                looped_filepath = os.path.join(app.root_path, 'temp', 'LooperOutput', filename)
+                looped_filepath = os.path.join(app.root_path, 'LooperOutput', filename)  # Fixed the file path here
                 zip_file.write(looped_filepath, os.path.basename(looped_filepath))
 
         return send_from_directory(os.path.join(app.root_path, 'temp'), zip_filename, as_attachment=True)
