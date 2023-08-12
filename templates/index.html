@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Soundscapes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+      <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            max-width: 20%; /* Reduced by 50% */
+            height: auto;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+
+        .button-wrapper {
+            margin: 5px;
+            flex: 1;
+        }
+
+        .button {
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px; /* Adjust padding to make buttons bigger */
+            margin: 5px; /* Adjust margin for consistent gaps */
+            cursor: pointer;
+            font-size: 30px; /* Adjust font size for bigger text */
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 10px;
+            transition: background-color 0.3s ease-in-out;
+            flex: 1; /* Distribute available space evenly among buttons */
+            vertical-align: top;
+            width: calc(33.33% - 20px); /* Adjust button width to fit three buttons in a row */
+            line-height: 1; /* Adjust line height to remove unintended movement */
+        }
+
+
+        /* Button colors */
+        .button-color-1 { background-color: #003049; color: white; }
+        .button-color-2 { background-color: #D62828; color: white; }
+        .button-color-3 { background-color: #F77F00; color: black; }
+        .button-color-4 { background-color: #FCBF49; color: black; }
+        .button-color-5 { background-color: #EAE2B7; color: black; }
+        .button-color-6 { background-color: #9CB380; color: black; }
+        .button-color-7 { background-color: #1B98E0; color: black; }
+        .button-color-8 { background-color: #2E933C; color: black; }
+
+        .audio-container {
+            width: calc(16.66% - 20px); /* Six columns on larger screens */
+            margin: 10px;
+            display: inline-block;
+            vertical-align: top;
+            text-align: center;
+        }
+
+        audio {
+            width: 100%;
+        }
+
+        .audio-info {
+            font-size: 18px;
+            margin-top: 5px;
+        }
+
+        /* Video background */
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        body {
+            font-size: 16px; /* Default font size */
+        }
+
+        h2 {
+            font-size: 30px; /* Default font size */
+        }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 25px; /* Decreased font size for mobile */
+            }
+
+            h2 {
+                font-size: 25px; /* Decreased font size for mobile */
+            }
+			.logo {
+            max-width: 60%; /* Reduced by 50% */
+            height: auto;
+        }
+        }
+
+        #upload-form {
+            font-size: 40px;
+            font-weight: bold;
+        }
+
+        /* Bigger buttons */
+        .button, .upload-button, .red-button, .loop-button, .choose-button-label {
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px; /* Adjust padding to make buttons bigger */
+            margin: 5px; /* Adjust margin for consistent gaps */
+            cursor: pointer;
+            font-size: 30px; /* Adjust font size for bigger text */
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 10px;
+            transition: background-color 0.3s ease-in-out;
+            flex: 1; /* Distribute available space evenly among buttons */
+            vertical-align: top;
+        }
+
+        /* Red button */
+        .red-button {
+            background-color: #D62828;
+            color: white;
+        }
+
+        /* Blue button */
+        .blue-button {
+            background-color: #2E933C;
+            color: white;
+        }
+
+        /* Green button */
+        .green-button {
+            background-color: #1B98E0;
+            color: white;
+        }
+	
+		/* Green loop button */
+		.loop-button-label.green-button {
+			background-color: #2E933C;
+			color: white;
+		}
+
+		/* Processing upload button */
+		.upload-button.processing {
+			background-color: #1B98E0;
+		}
+		
+		.loop-button-label {
+            display: inline-block;
+            padding: 10px 20px; /* Adjust padding to make the button consistent */
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 30px; /* Adjust font size for button text */
+            transition: background-color 0.3s ease-in-out;
+			line-height: 1; /* Adjust line height to remove unintended movement */
+        }
+		
+		        .loop-button-label.on {
+            background-color: #2E933C; /* Green when powered on */
+            color: white;
+        }
+
+        .loop-button-label.off {
+            background-color: #D62828; /* Red when powered off */
+            color: white;
+        }
+
+        .loop-button-label:hover {
+            background-color: #FCBF49; /* Change background color on hover */
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <video id="video-background" autoplay muted loop>
+        <source src="{{ url_for('static', filename='video.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <div id="header">
+        <div class="logo-container">
+            <a href="https://ermine.at" target="_blank">
+                <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+            </a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="all-soundscapes">
+            <div class="container">
+                <h2 style="font-weight: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">A simple site for generating perfect song loops. Max. size: 100 MB.</h2>
+                <h2 style="font-weight: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">Creates perfectly loopable song cuts for easy repetition. </h2>
+                <h2 style="font-weight: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">If the script gives you an empty file, that means it couldn't find a proper way to loop your song. </h2>
+                <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form" onsubmit="handleSubmit()">
+                    <div class="form-group">
+                        <label for="music" class="choose-button-label green-button">
+                            <span id="file-count">Choose .mp3, .wav files...</span>
+                            <input type="file" name="music" id="music" accept=".mp3, .wav" multiple style="display: none;" onchange="toggleChooseButtonColor(this);">
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="triplicate" class="loop-button-label red-button" onclick="toggleLoopButtonColor(this);">Loop 3 times</label>
+                        <input type="checkbox" name="triplicate" id="triplicate" style="display: none;" onchange="toggleLoopButtonColor(this);">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="upload-button blue-button">
+                            <span>Upload</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    function toggleChooseButtonColor(input) {
+        var chooseButton = document.querySelector('.choose-button-label');
+        var fileCount = document.getElementById('file-count');
+        var filePlural = input.files.length > 1 ? 'files' : 'file';
+        fileCount.innerText = input.files.length + ' ' + filePlural + ' selected';
+        chooseButton.style.backgroundColor = getRandomColor();
+        chooseButton.style.color = 'white';
+    }
+
+    function toggleLoopButtonColor(button) {
+        button.style.backgroundColor = getRandomColor();
+        button.style.color = 'white';
+    }
+
+    function handleSubmit() {
+        var uploadButton = document.querySelector('.upload-button');
+        var uploadLabel = uploadButton.querySelector('span');
+        
+        uploadButton.classList.add('processing');
+        uploadLabel.innerText = 'Processing...';
+		
+        // Simulate a delay to demonstrate the change
+        setTimeout(function() {
+            uploadButton.classList.remove('processing');
+            uploadLabel.innerText = 'Upload';
+            uploadButton.style.backgroundColor = getRandomColor();
+            uploadButton.style.color = 'white';
+        }, 3000); // Replace with actual script execution time
+    }
+</script>
+</html>

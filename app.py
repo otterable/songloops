@@ -1,142 +1,45 @@
+from flask import Flask, render_template, send_from_directory
+import os
+
+app = Flask(__name__, static_url_path='/static')
+
+def get_soundscapes():
+    soundscapes = []
+    soundscapes_path = os.path.join(app.static_folder, 'soundscapes')
+    for folder in os.listdir(soundscapes_path):
+        if os.path.isdir(os.path.join(soundscapes_path, folder)):
+            soundscapes.append(folder)
+    return soundscapes
+    
+
+
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for, Response
 import os
 import subprocess
 import shutil
 import time
 import zipfile
-from flask import Flask, request, redirect, url_for, send_from_directory
 from pydub import AudioSegment
 import re
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 
-@app.route('/')
-def index():
-    return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Ermine Song Loops</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
-            font-size: 28px;
-            line-height: 1.5;
-            font-weight: bold;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px 30px;
-            background-color: #111;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 10px;
-            margin-top: 0;
-        }
-
-        .logo img {
-            width: 200px;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 36px;
-            margin-bottom: 20px;
-            margin-top: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-
-        .form-group input[type="file"], .form-group input[type="text"], .form-group input[type="checkbox"] {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            font-size: 20px;
-            background-color: #222;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-        }
-
-        .form-group input[type="submit"] {
-            background-color: #ff0;
-            color: #000;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 24px;
-            cursor: pointer;
-            margin: 0 auto;
-        }
-
-        .form-group input[type="submit"]:hover {
-            background-color: #ee0;
-        }
-
-        .about-section {
-            margin-top: 10px;
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 18px;
-            color: #ccc;
-        }
-
-        .usage-title {
-            font-weight: bold;
-        }
-
-        .usage-text {
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <img src="/static/logo.png" alt="Ermine Song Loops Logo">
-        </div>
-        <h1>Ermine Song Loops</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="music">Choose .mp3, .wav files..</label>
-                <input type="file" name="music" id="music" accept=".mp3, .wav" multiple>
-            </div>
-            <div class="form-group">
-                <label for="triplicate">Loop 3 times</label>
-                <input type="checkbox" name="triplicate" id="triplicate" style="transform: scale(1.5);">
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Upload">
-            </div>
-        </form>
-        <div class="about-section">
-            A simple site for generating perfect song loops. Max. size: 100 MB. An <a href="https://ermine.de" target="_blank">Ermine</a> project.
-            <div class="usage-text">Creates perfectly loopable song cuts for easy repetition.</div>
-        </div>
-    </div>
-</body>
-</html>
-'''
+def get_soundscapes():
+    soundscapes = []
+    soundscapes_path = os.path.join(app.static_folder, 'soundscapes')
+    for folder in os.listdir(soundscapes_path):
+        if os.path.isdir(os.path.join(soundscapes_path, folder)):
+            soundscapes.append(folder)
+    return soundscapes
 
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.route('/')
+def index():
+    soundscapes = get_soundscapes()
+    return render_template('index.html', soundscapes=soundscapes)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -184,23 +87,7 @@ def process():
     if url:
         # Check if the URL is from YouTube
         if 'youtube.com' not in url:
-            return '''
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Invalid URL</title>
-                <style>
-                    ...
-                </style>
-            </head>
-            <body>
-                <div class="message">
-                    <h1>Invalid URL</h1>
-                    <p>Sadly, only YouTube URLs are supported.</p>
-                </div>
-            </body>
-            </html>
-            '''
+            return render_template('invalid_url.html')
 
         triplicate = 'triplicate' in request.form
 
@@ -223,25 +110,10 @@ def process():
     return redirect(url_for('error'))
 
 def send_loop_file(output_folder, looped_filename, triplicate):
+    # Check if the looped file exists
     looped_filepath = os.path.join(output_folder, looped_filename)
     if not os.path.exists(looped_filepath):
-        return '''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>No Loop File Found</title>
-            <style>
-                ...
-            </style>
-        </head>
-        <body>
-            <div class="message">
-                <h1>No Loop File Found</h1>
-                <p>No looped file was generated for the given URL.</p>
-            </div>
-        </body>
-        </html>
-        '''
+        return render_template('no_loop_file.html')
 
     if triplicate:
         triplicated_filename = triplicate_audio(looped_filepath)
