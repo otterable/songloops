@@ -1,19 +1,4 @@
-from flask import Flask, render_template, send_from_directory
-import os
-
-app = Flask(__name__, static_url_path='/static')
-
-def get_soundscapes():
-    soundscapes = []
-    soundscapes_path = os.path.join(app.static_folder, 'soundscapes')
-    for folder in os.listdir(soundscapes_path):
-        if os.path.isdir(os.path.join(soundscapes_path, folder)):
-            soundscapes.append(folder)
-    return soundscapes
-    
-
-
-from flask import Flask, render_template, request, send_from_directory, redirect, url_for, Response
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for, Response, send_file
 import os
 import subprocess
 import shutil
@@ -43,7 +28,6 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    # Check if the 'music' files are present in the request
     if 'music' not in request.files:
         return redirect(url_for('error'))
 
@@ -52,11 +36,9 @@ def upload():
 
     looped_files = []
     output_folder = os.path.join(app.root_path, 'temp', 'LooperOutput')
-
-    os.makedirs(output_folder, exist_ok=True)  # Create the 'LooperOutput' directory if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
 
     for file in files:
-        # Save each uploaded file to a temporary location
         filename = file.filename
         file_path = os.path.join(app.root_path, 'temp', filename)
         file.save(file_path)
@@ -65,20 +47,17 @@ def upload():
         if looped_filepath:
             looped_files.append(looped_filepath)
 
-    # Provide the download links to the user
     if len(looped_files) == 1:
-        return send_from_directory(output_folder, looped_files[0], as_attachment=True)
+        file_path = os.path.join(output_folder, looped_files[0])
+        return send_file(file_path, as_attachment=True, download_name=looped_files[0], mimetype='audio/mpeg')
     else:
-        # Create a zip file containing the looped files
         zip_filename = 'looped_files.zip'
         zip_filepath = os.path.join(app.root_path, 'temp', zip_filename)
-
         with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
             for looped_file in looped_files:
                 looped_filepath = os.path.join(output_folder, looped_file)
                 zip_file.write(looped_filepath, looped_file)
-
-        return send_from_directory(os.path.join(app.root_path, 'temp'), zip_filename, as_attachment=True)
+        return send_file(zip_filepath, as_attachment=True, download_name=zip_filename, mimetype='application/zip')
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -132,10 +111,10 @@ def download_loop_file(filepath, filename):
             yield from file
 
     # Create a custom response to send the looped file as an attachment
-    response = Response(generate(), content_type='application/octet-stream')
-    response.headers.set('Content-Disposition', 'attachment', filename=filename)
+    response = send_file(os.path.join(output_folder, looped_files[0]), mimetype='audio/mpeg', as_attachment=True)
+    response.headers['Content-Type'] = 'audio/mpeg'
     return response
-
+    
     return redirect(url_for('error'))
 
 def send_loop_file(output_folder, looped_filename, triplicate):

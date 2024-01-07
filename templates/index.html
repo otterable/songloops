@@ -203,48 +203,57 @@ function toggleLoopButtonColor(button) {
 }
 
 document.getElementById('upload-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        var formData = new FormData(this);
-        var loadingOverlay = document.getElementById('loading-overlay');
-        var fileInput = document.getElementById('music');
-        var uploadButton = document.querySelector('.upload-button span');
-        var chooseButtonLabel = document.querySelector('.choose-button-label');
-        
-        loadingOverlay.style.display = 'block'; // Show loading overlay
-        uploadButton.innerText = 'Processing...';
+    e.preventDefault();
 
-        fetch('/upload', {
-            method: 'POST',
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                return response.blob();
+    var formData = new FormData(this);
+    var loadingOverlay = document.getElementById('loading-overlay');
+    var uploadButton = document.querySelector('.upload-button span');
+    var chooseButtonLabel = document.querySelector('.choose-button-label');
+
+    loadingOverlay.style.display = 'block'; // Show loading overlay
+    uploadButton.innerText = 'Processing...';
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    }).then(response => {
+        if (response.ok) {
+            // Extract filename from Content-Disposition header if available
+            var contentDisposition = response.headers.get('Content-Disposition');
+            var filename = contentDisposition ? contentDisposition.split('filename=')[1] : null;
+            if (filename) {
+                filename = filename.replaceAll('"', '');
+            } else {
+                // Fallback filename if not found in header
+                filename = 'downloaded_file';
             }
-            throw new Error('Network response was not ok.');
-        }).then(blob => {
-            loadingOverlay.style.display = 'none'; // Hide loading overlay
+            return response.blob().then(blob => ({ blob, filename }));
+        }
+        throw new Error('Network response was not ok.');
+    }).then(({ blob, filename }) => {
+        loadingOverlay.style.display = 'none'; // Hide loading overlay
 
-            // Reset form elements
-            fileInput.value = ''; // Clear the file input
-            uploadButton.innerText = 'Upload'; // Reset the button label
-            chooseButtonLabel.style.backgroundColor = ''; // Reset the choose button color
-            chooseButtonLabel.style.color = ''; 
-            document.getElementById('file-count').innerText = 'Choose .mp3, .wav files...';
+        // Reset form elements
+        document.getElementById('music').value = ''; // Clear the file input
+        uploadButton.innerText = 'Upload'; // Reset the button label
+        chooseButtonLabel.style.backgroundColor = ''; // Reset the choose button color
+        chooseButtonLabel.style.color = ''; 
+        document.getElementById('file-count').innerText = 'Choose .mp3, .wav files...';
 
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'downloaded_file.zip'; // or the filename from the server
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        }).catch(error => {
-            loadingOverlay.style.display = 'none';
-            uploadButton.innerText = 'Upload';
-            console.error('There has been a problem with your fetch operation:', error);
-        });
+        // Create a link to download the file
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename; // Set the download filename
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }).catch(error => {
+        loadingOverlay.style.display = 'none';
+        uploadButton.innerText = 'Upload';
+        console.error('There has been a problem with your fetch operation:', error);
     });
+});
 
 </script>
 </html>
