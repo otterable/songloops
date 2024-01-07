@@ -178,7 +178,7 @@ def process_file(file_path, output_folder, triplicate):
     output_filename = f'{os.path.splitext(os.path.basename(file_path))[0]}-loop{os.path.splitext(file_path)[1]}'
     output_filepath = os.path.join(output_folder, output_filename)
 
-    command = [script_path, 'split-audio', '--path', file_path]
+    command = [script_path, 'split-audio', '--path', file_path, '--min-duration-multiplier', '0.15']
 
     subprocess.run(command, cwd=app.root_path)
 

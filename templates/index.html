@@ -3,16 +3,16 @@
 <head>
     <title>Ermine.at - Song loops</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-      <style>
+    <style>
         body {
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
+            background-color: #000; /* Updated background color to black */
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .logo-container {
@@ -21,217 +21,98 @@
         }
 
         .logo {
-            max-width: 20%; /* Reduced by 50% */
+            width: 150px;
             height: auto;
         }
 
-        .button-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            padding: 20px 0;
-        }
-
-        .button-wrapper {
-            margin: 5px;
-            flex: 1;
-        }
-
-        .button {
-            font-weight: bold;
-            border: none;
-            padding: 10px 20px; /* Adjust padding to make buttons bigger */
-            margin: 5px; /* Adjust margin for consistent gaps */
-            cursor: pointer;
-            font-size: 30px; /* Adjust font size for bigger text */
-            text-decoration: none;
+        .button, .choose-button-label, .loop-button-label, .upload-button {
             display: inline-block;
-            border-radius: 10px;
-            transition: background-color 0.3s ease-in-out;
-            flex: 1; /* Distribute available space evenly among buttons */
-            vertical-align: top;
-            width: calc(33.33% - 20px); /* Adjust button width to fit three buttons in a row */
-            line-height: 1; /* Adjust line height to remove unintended movement */
-        }
-
-
-        /* Button colors */
-        .button-color-1 { background-color: #003049; color: white; }
-        .button-color-2 { background-color: #D62828; color: white; }
-        .button-color-3 { background-color: #F77F00; color: black; }
-        .button-color-4 { background-color: #FCBF49; color: black; }
-        .button-color-5 { background-color: #EAE2B7; color: black; }
-        .button-color-6 { background-color: #9CB380; color: black; }
-        .button-color-7 { background-color: #1B98E0; color: black; }
-        .button-color-8 { background-color: #2E933C; color: black; }
-
-        .audio-container {
-            width: calc(16.66% - 20px); /* Six columns on larger screens */
+            padding: 12px 25px;
             margin: 10px;
-            display: inline-block;
-            vertical-align: top;
+            font-size: 16px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: white;
+            background-color: #003056; /* Updated button color */
+        }
+
+
+ .button:hover, .choose-button-label:hover, .loop-button-label:hover, .upload-button:hover {
+            transform: scale(1.02);
+            background-color: #004080; /* Making the button 10% lighter on hover */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+		
+        .info-field {
+            margin: 20px auto;
+            padding: 15px;
+            max-width: 800px;
+            border: 1px solid #444;
+            border-radius: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
-        audio {
-            width: 100%;
-        }
-
-        .audio-info {
+        .info-subtitle {
             font-size: 18px;
-            margin-top: 5px;
-        }
-
-        /* Video background */
-        #video-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -1;
-        }
-
-        body {
-            font-size: 16px; /* Default font size */
-        }
-
-        h3 {
-            font-size: 30px; /* Default font size */
-        }
-
-
-/* Media query for mobile devices */
-@media (max-width: 768px) {
-    .info-subtitle {
-        font-size: 10px;
-    }
-}
-        @media (max-width: 768px) {
-            body {
-                font-size: 25px; /* Decreased font size for mobile */
-            }
-		
-		
-
-            h3 {
-                font-size: 25px; /* Decreased font size for mobile */
-            }
-			.logo {
-            max-width: 30%; /* Reduced by 50% */
-            height: auto;
-        }
+            margin: 10px 0;
+            color: #ccc;
         }
 
         #upload-form {
-            font-size: 40px;
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 20px;
+            border-radius: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
             font-weight: bold;
         }
 
-        /* Bigger buttons */
-        .button, .upload-button, .red-button, .loop-button, .choose-button-label {
-            font-weight: bold;
-            border: none;
-            padding: 10px 20px; /* Adjust padding to make buttons bigger */
-            margin: 5px; /* Adjust margin for consistent gaps */
-            cursor: pointer;
-            font-size: 30px; /* Adjust font size for bigger text */
-            text-decoration: none;
-            display: inline-block;
-            border-radius: 10px;
-            transition: background-color 0.3s ease-in-out;
-            flex: 1; /* Distribute available space evenly among buttons */
-            vertical-align: top;
+        .form-group input[type="file"] {
+            display: none;
         }
 
-        /* Red button */
-        .red-button {
-            background-color: #D62828;
-            color: white;
+        .form-group input[type="checkbox"] {
+            margin-right: 10px;
         }
 
-        /* Blue button */
-        .blue-button {
-            background-color: green;
-            color: white;
-        }
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
 
- .info-field {
-}
-	
-    border: 8px solid black;
-    flex: 0 0 calc(30% - 20px); /* You can adjust this to control the number of bikes per row on desktop */
-    text-align: center; /* Center the text and inline elements */
-    box-sizing: border-box;
-    background-color: rgba(0, 0, 0, 0.8); /* Black with 30% opacity */
-    border-radius: 15px;  /* Making the corners round */
-}
-		.info-title {
-			font-weight: bold;
-			font-size: 28px;
-			margin: 10px;
-		}
+            .logo {
+                width: 120px;
+            }
 
-	 .info-subtitle {
-			font-weight: bold;
-			font-size: 24px;
-			margin: 10px;
-		}
+            .info-subtitle {
+                font-size: 16px;
+            }
 
-		.info-text {
-			font-size: 20px; /* Adjust the font size as needed */
-		}
-		
-		
-        /* Green button */
-        .green-button {
-            background-color: #1B98E0;
-            color: white;
+            #upload-form {
+                margin: 20px;
+                padding: 15px;
+            }
         }
-	
-		/* Green loop button */
-		.loop-button-label.green-button {
-			background-color: #2E933C;
-			color: white;
-		}
-
-		/* Processing upload button */
-		.upload-button.processing {
-			background-color: #1B98E0;
-		}
-		
-		.loop-button-label {
-            display: inline-block;
-            padding: 10px 20px; /* Adjust padding to make the button consistent */
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 30px; /* Adjust font size for button text */
-            transition: background-color 0.3s ease-in-out;
-			line-height: 1; /* Adjust line height to remove unintended movement */
-        }
-		
-		        .loop-button-label.on {
-            background-color: #2E933C; /* Green when powered on */
-            color: white;
-        }
-
-        .loop-button-label.off {
-            background-color: #D62828; /* Red when powered off */
-            color: white;
-        }
-
-        .loop-button-label:hover {
-            background-color: #FCBF49; /* Change background color on hover */
-        }
-    </style>
     </style>
 </head>
 <body>
-    <video id="video-background" autoplay muted loop>
-        <source src="{{ url_for('static', filename='video.mp4') }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+        <img src="{{ url_for('static', filename='wieselspin.gif') }}" alt="Loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    </div>
     
     <div id="header">
         <div class="logo-container">
@@ -245,7 +126,7 @@
 	<div class="info-field">
                  <div class="info-subtitle">A simple site for generating perfect song loops. Max. size: 100 MB.</div>
 				                  <div class="info-subtitle">Creates perfectly loopable song cuts for easy repetition.</div>
-                 <div class="info-subtitle">If the script gives you an empty file, that means it couldn't find a proper way to loop your song.</div>
+                 <div class="info-subtitle">v7.1.2024</div>
 
 				</div>
 				</div>
@@ -265,7 +146,7 @@
                         <input type="checkbox" name="triplicate" id="triplicate" style="display: none;" onchange="toggleLoopButtonColor(this);">
                     </div>
                     <div class="form-group">
-                        <button type="submit" class="upload-button blue-button">
+                        <button type="submit" class="upload-button blue-button" style="font-weight:bold">
                             <span>Upload</span>
                         </button>
                     </div>
@@ -298,23 +179,72 @@ function toggleLoopButtonColor(button) {
     button.style.color = 'white';
 }
 
-function handleSubmit() {
+        function handleSubmit() {
     var uploadButton = document.querySelector('.upload-button');
     var uploadLabel = uploadButton.querySelector('span');
-    
+    var loadingOverlay = document.getElementById('loading-overlay');
+
     uploadButton.classList.add('processing');
     uploadLabel.innerText = 'Processing...';
-    
-    // Simulate a delay to demonstrate the change
-    setTimeout(function() {
-        uploadButton.classList.remove('processing');
-        uploadLabel.innerText = 'Upload';
-        
-        // Set to green when toggled
-        uploadButton.style.backgroundColor = 'green';
-        uploadButton.style.color = 'white';
-    }, 3000); // Replace with actual script execution time
+    loadingOverlay.style.display = 'block'; // Show the loading overlay
+
+    // Poll for the existence of the cookie
+    var checkDownloadCookie = setInterval(function() {
+        if (document.cookie.split(';').some((item) => item.trim().startsWith('fileDownload='))) {
+            clearInterval(checkDownloadCookie);
+            uploadButton.classList.remove('processing');
+            uploadLabel.innerText = 'Upload';
+            loadingOverlay.style.display = 'none'; // Hide the loading overlay
+
+            // Clear the cookie
+            document.cookie = 'fileDownload=; Max-Age=-99999999;';  
+        }
+    }, 1000); // Check every second
 }
+
+document.getElementById('upload-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = new FormData(this);
+        var loadingOverlay = document.getElementById('loading-overlay');
+        var fileInput = document.getElementById('music');
+        var uploadButton = document.querySelector('.upload-button span');
+        var chooseButtonLabel = document.querySelector('.choose-button-label');
+        
+        loadingOverlay.style.display = 'block'; // Show loading overlay
+        uploadButton.innerText = 'Processing...';
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Network response was not ok.');
+        }).then(blob => {
+            loadingOverlay.style.display = 'none'; // Hide loading overlay
+
+            // Reset form elements
+            fileInput.value = ''; // Clear the file input
+            uploadButton.innerText = 'Upload'; // Reset the button label
+            chooseButtonLabel.style.backgroundColor = ''; // Reset the choose button color
+            chooseButtonLabel.style.color = ''; 
+            document.getElementById('file-count').innerText = 'Choose .mp3, .wav files...';
+
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'downloaded_file.zip'; // or the filename from the server
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }).catch(error => {
+            loadingOverlay.style.display = 'none';
+            uploadButton.innerText = 'Upload';
+            console.error('There has been a problem with your fetch operation:', error);
+        });
+    });
 
 </script>
 </html>
